@@ -1,31 +1,70 @@
-import { StyleSheet } from 'react-native';
-
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+import React, { useState, useEffect } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { CameraView } from "expo-camera";
+import { AppProvider } from "@/Context/AppContext";
 
 export default function TabOneScreen() {
+  const [hasPermission, setHasPermission] = useState(null);
+
+  useEffect(() => {
+    const doConnection = async () => {
+      const { status } = await Camera.requestPermissionsAsync();
+      console.log({ status });
+      setHasPermission(!!(status === "granted"));
+    };
+
+    try {
+      doConnection();
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
+
+  if (hasPermission === null) {
+    return <View />;
+  }
+  if (hasPermission === false) {
+    return <Text>No access to camera</Text>;
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
+      <AppProvider>
+        <Text style={styles.title}>Read QR</Text>
+        <View style={styles.separator} />
+        <CameraView
+          style={styles.camera}
+          barcodeScannerSettings={{
+            barcodeTypes: ["qr"],
+          }}
+          onBarcodeScanned={(data) => {
+            console.log(data);
+          }}
+        />
+      </AppProvider>
     </View>
   );
 }
 
+// Your styles here
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ecf0f1",
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   separator: {
     marginVertical: 30,
     height: 1,
-    width: '80%',
+    width: "80%",
+  },
+  camera: {
+    flex: 1,
+    width: "100%",
   },
 });
