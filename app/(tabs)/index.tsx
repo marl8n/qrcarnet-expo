@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { CameraView } from "expo-camera";
+import { Button, StyleSheet, Text, View } from "react-native";
+import { Camera, CameraView } from "expo-camera";
 import { AppProvider } from "@/Context/AppContext";
 
 export default function TabOneScreen() {
-  const [hasPermission, setHasPermission] = useState(null);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [scanned, setScanned] = useState(false);
+  const [data, setData] = useState("");
 
   useEffect(() => {
     const doConnection = async () => {
-      const { status } = await Camera.requestPermissionsAsync();
+      const { status } = await Camera.requestCameraPermissionsAsync();
       console.log({ status });
       setHasPermission(!!(status === "granted"));
     };
@@ -32,13 +34,23 @@ export default function TabOneScreen() {
       <AppProvider>
         <Text style={styles.title}>Read QR</Text>
         <View style={styles.separator} />
+
+        {scanned ? (
+          <View style={styles.scannedContainer}>
+            <Text style={styles.scannedText}>Scanned Data: {data}</Text>
+            <Button title="Rescan" onPress={() => setScanned(false)} />
+          </View>
+        ) : null}
         <CameraView
           style={styles.camera}
           barcodeScannerSettings={{
             barcodeTypes: ["qr"],
           }}
           onBarcodeScanned={(data) => {
-            console.log(data);
+            if (!scanned) {
+              setData(data.data);
+              setScanned(true);
+            }
           }}
         />
       </AppProvider>
@@ -66,5 +78,15 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
     width: "100%",
+  },
+  scannedContainer: {
+    backgroundColor: "yellow",
+    padding: 10,
+    marginTop: 20,
+    borderRadius: 5,
+  },
+  scannedText: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
